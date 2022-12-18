@@ -10,3 +10,9 @@ yarn-error.log
 .vscode
 #coverage
 coverage
+
+example/*
+!example/README.md
+
+data/*
+!data/README.md
