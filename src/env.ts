@@ -1,1 +1,1 @@
-export const dirname = process.env.DEV ? 'examples' : 'src';
+export const dirname = process.env.DEV ? 'example' : 'src';

@@ -10,7 +10,13 @@
     "baseUrl": "./src",
     "experimentalDecorators": true,
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "paths": {
+      "@helpers/*": ["helpers/*"],
+      "@models/*": ["models/*"],
+      "@services/*": ["services/*"],
+      "@services": ["services"]
+    }
   },
   "include": ["src/**/*.ts", "test/**/*.spec.ts"],
   "exclude": ["node_modules"]

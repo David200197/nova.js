@@ -1,0 +1,4 @@
+TODO
+- agregar nodo del objeto
+- agregar nodo del array
+- da error cuando anidas @default(now())

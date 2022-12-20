@@ -1,15 +1,21 @@
 import { dirname } from './env';
 import fg from 'fast-glob';
 import { getMetadata } from './services/get-metadata';
-import { kompoCompile } from './services/kompo-compile';
+import { compile } from './services/compile';
 
 const checkPath = (path: string) => {
   const metadata = getMetadata(path);
-  kompoCompile();
+  compile(metadata);
 };
 
 const bootstrap = async () => {
-  const paths = await fg([`${dirname}/**/*.kompo`], { dot: true });
+  const extension = 'nova';
+  const paths = await fg(
+    [`${dirname}/**/*.${extension}`, `${dirname}/*.${extension}`],
+    {
+      dot: true,
+    },
+  );
   paths.map(checkPath);
 };
 bootstrap();

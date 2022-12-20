@@ -1,7 +1,8 @@
 import { basename } from 'path';
 import { readFileSync } from 'fs';
+import { Metadata } from 'models/metadata';
 
-export const getMetadata = (path: string) => {
+export const getMetadata = (path: string): Metadata => {
   const fileName = basename(path);
   const folder = path.replace(`/${fileName}`, '');
   const [name] = fileName.split('.');
