@@ -104,7 +104,8 @@ export const parser = (tokens: Token[]): Ats => {
       };
       if (
         !startsWithLowercase(nextToken.value) &&
-        nextToken.type !== 'bracket'
+        (nextToken.type !== 'bracket' ||
+          (nextToken.type === 'bracket' && nextToken.value !== '}'))
       ) {
         node.children = walk(mode);
       }
@@ -116,6 +117,10 @@ export const parser = (tokens: Token[]): Ats => {
         params: [],
       };
       token = tokens[++current];
+      if (token.type === 'bracket' && token.value === '}') {
+        current++;
+        return node;
+      }
       while (
         token.type !== 'bracket' ||
         (token.type === 'bracket' && token.value !== '}')
@@ -135,6 +140,10 @@ export const parser = (tokens: Token[]): Ats => {
         children: null,
       };
       token = tokens[++current];
+      if (token.type === 'paren' && token.value === ')') {
+        current++;
+        return node;
+      }
       while (
         token.type !== 'paren' ||
         (token.type === 'paren' && token.value !== ')')
@@ -146,9 +155,10 @@ export const parser = (tokens: Token[]): Ats => {
       const nextToken = tokens[current];
       if (
         !startsWithLowercase(nextToken.value) &&
-        nextToken.type !== 'bracket'
+        (nextToken.type !== 'bracket' ||
+          (nextToken.type === 'bracket' && nextToken.value !== '}'))
       ) {
-        node.children = walk(mode);
+        node.children = walk('inside_paren');
       }
       return node;
     }
