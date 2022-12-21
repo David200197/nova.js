@@ -1,4 +1,4 @@
-import { generateFile } from '../../helpers/utils';
+import { generateFile } from '../../utils/helper';
 import { Metadata } from '@models/metadata';
 import { parser } from './parser';
 import { tokenizer } from './tokenizer';

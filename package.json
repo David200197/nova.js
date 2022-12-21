@@ -4,8 +4,9 @@
   "description": "A template for a nodejs application, using typescript",
   "main": "dist/src/index.js",
   "author": "David200197",
-  "license": "MIT",  
+  "license": "MIT",
   "scripts": {
+    "ts-node": "ts-node",
     "dev": "set DEV=true && ts-node ./src/index.ts",
     "build": "tsc",
     "start": "node ./dist/index.js",

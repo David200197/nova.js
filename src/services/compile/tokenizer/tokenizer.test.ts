@@ -1,5 +1,6 @@
+import { Token } from '@models/token';
 import { describe, expect, it } from 'vitest';
-import { Token, tokenizer } from '.';
+import { tokenizer } from '.';
 
 describe('tokenizer', () => {
   it('should return a name value', () => {

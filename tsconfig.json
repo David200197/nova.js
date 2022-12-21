@@ -12,7 +12,7 @@
     "strict": true,
     "esModuleInterop": true,
     "paths": {
-      "@helpers/*": ["helpers/*"],
+      "@utils/*": ["utils/*"],
       "@models/*": ["models/*"],
       "@services/*": ["services/*"],
       "@services": ["services"]

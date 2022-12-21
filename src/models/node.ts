@@ -1,9 +1,16 @@
 type Collections = 'Fields' | 'Object' | 'Array';
+type BlockCollections = 'Params' | 'ArrayType';
+type Set = 'Separator' | 'Property';
 type Literials =
   | 'NumberLiteral'
   | 'StringLiteral'
   | 'BooleanLiteral'
   | 'NullLiteral';
+export type Moment =
+  | 'normal'
+  | 'inside_brackets'
+  | 'inside_paren'
+  | 'inside_square_brackets';
 export type Node =
   | {
       type: 'Block';
@@ -11,11 +18,14 @@ export type Node =
       children: Node | null;
     }
   | {
-      type: 'Separator' | 'Property';
+      type: 'EndLine';
+    }
+  | {
+      type: Set;
       value: string;
     }
   | {
-      type: 'Params';
+      type: BlockCollections;
       params: Node[];
       children: Node | null;
     }

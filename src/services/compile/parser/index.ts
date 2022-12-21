@@ -1,167 +1,195 @@
-import { startsWithLowercase } from '../../../helpers/validation';
 import { Token } from '@models/token';
-import { Node } from '@models/node';
+import { Moment, Node } from '@models/node';
 import { Ats } from '@models/ats';
-
-type Moment = 'normal' | 'inside_brackets' | 'inside_paren';
+import {
+  isBooleanToken,
+  isOpenBracketToken,
+  isColonToken,
+  isCommaToken,
+  isEndLine,
+  isEqualToken,
+  isNameToken,
+  isNullToken,
+  isNumberToken,
+  isOpenParenToken,
+  isPropertyToken,
+  isQuestionMarkToken,
+  isStringToken,
+  isCloseBracketToken,
+  isCloseParenToken,
+  isBracketToken,
+  isInsideBracketsMoment,
+  isLowerCaseNameToken,
+  isParenToken,
+} from './validate';
 
 export const parser = (tokens: Token[]): Ats => {
   let current = 0;
-  const walk = (mode: Moment = 'normal'): Node => {
+  const walk = (moment: Moment = 'normal'): Node => {
     let token = tokens[current];
-    if (token.type === 'number') {
+    const nextToken = tokens[current + 1];
+
+    if (isEndLine(token, moment)) {
+      return {
+        type: 'EndLine',
+      };
+    }
+
+    if (isNumberToken(token)) {
       current++;
       return {
         type: 'NumberLiteral',
         value: token.value,
       };
     }
-    if (token.type === 'string') {
+
+    if (isStringToken(token)) {
       current++;
       return {
         type: 'StringLiteral',
         value: token.value,
       };
     }
-    if (
-      token.type === 'name' &&
-      (token.value === 'true' || token.value === 'false')
-    ) {
+
+    if (isBooleanToken(token)) {
       current++;
       return {
         type: 'BooleanLiteral',
         value: token.value,
       };
     }
-    if (token.type === 'name' && token.value === 'null') {
+
+    if (isNullToken(token)) {
       current++;
       return {
         type: 'NullLiteral',
         value: token.value,
       };
     }
-    if (token.type === 'comma') {
+
+    if (isCommaToken(token) || isColonToken(token)) {
       current++;
       return {
         type: 'Separator',
-        value: ',',
+        value: token.value,
       };
     }
-    if (token.type === 'colon') {
-      current++;
-      return {
-        type: 'Separator',
-        value: ':',
-      };
-    }
-    if (token.type === 'equal') {
+
+    if (isPropertyToken(token, nextToken, moment)) {
       current++;
       const node: Node = {
-        type: 'Block',
-        value: '=',
-        children: walk(mode),
+        type: 'Property',
+        value: token.value,
       };
       return node;
     }
-    if (token.type === 'question_mark') {
+
+    if (
+      isEqualToken(token) ||
+      isQuestionMarkToken(token) ||
+      isNameToken(token)
+    ) {
       current++;
-      const node: Node = {
-        type: 'Block',
-        value: '?',
-        children: null,
-      };
-      const nextToken = tokens[current];
-      if (
-        !startsWithLowercase(nextToken.value) &&
-        nextToken.type !== 'bracket'
-      ) {
-        node.children = walk(mode);
-      }
-      return node;
-    }
-    if (token.type === 'name') {
-      current++;
-      const nextToken = tokens[current];
-      if (mode === 'normal') {
-        const node: Node = {
-          type: 'Block',
-          value: token.value,
-          children: walk(mode),
-        };
-        return node;
-      }
-      if (mode === 'inside_paren' && nextToken.type === 'colon') {
-        const node: Node = {
-          type: 'Property',
-          value: token.value,
-        };
-        return node;
-      }
       const node: Node = {
         type: 'Block',
         value: token.value,
-        children: null,
+        children: walk(moment),
       };
-      if (
-        !startsWithLowercase(nextToken.value) &&
-        (nextToken.type !== 'bracket' ||
-          (nextToken.type === 'bracket' && nextToken.value !== '}'))
-      ) {
-        node.children = walk(mode);
+      return node;
+    }
+
+    if (isOpenBracketToken(token) && isCloseBracketToken(nextToken)) {
+      current++;
+      current++;
+      let node: Node;
+      if (isInsideBracketsMoment(moment)) {
+        node = {
+          type: 'Fields',
+          params: [],
+        };
+      } else {
+        node = {
+          type: 'Object',
+          params: [],
+        };
       }
       return node;
     }
-    if (token.type === 'bracket' && token.value === '{') {
+
+    if (isOpenBracketToken(token, { isNormal: true, moment })) {
       const node: Node = {
-        type: mode === 'inside_paren' ? 'Object' : 'Fields',
+        type: 'Fields',
         params: [],
       };
       token = tokens[++current];
-      if (token.type === 'bracket' && token.value === '}') {
-        current++;
-        return node;
-      }
       while (
-        token.type !== 'bracket' ||
-        (token.type === 'bracket' && token.value !== '}')
+        !isBracketToken(token) ||
+        (isBracketToken(token) && !isCloseBracketToken(token))
       ) {
-        node.params.push(
-          walk(mode === 'inside_paren' ? mode : 'inside_brackets'),
-        );
+        current++;
+        if (isNameToken(token) && isLowerCaseNameToken(token)) {
+          node.params.push({
+            type: 'Block',
+            value: token.value,
+            children: walk('inside_brackets'),
+          });
+          token = tokens[current];
+          continue;
+        }
+        node.params.push(walk('inside_brackets'));
         token = tokens[current];
       }
       current++;
       return node;
     }
-    if (token.type === 'paren' && token.value === '(') {
+
+    if (isOpenBracketToken(token)) {
+      const node: Node = {
+        type: 'Object',
+        params: [],
+      };
+      token = tokens[++current];
+      while (
+        !isBracketToken(token) ||
+        (isBracketToken(token) && !isCloseBracketToken(token))
+      ) {
+        node.params.push(walk(moment));
+        token = tokens[current];
+      }
+      current++;
+      return node;
+    }
+
+    if (isOpenParenToken(token) && isCloseParenToken(nextToken)) {
+      current++;
+      current++;
+      const node: Node = {
+        type: 'Params',
+        params: [],
+        children: null,
+      };
+      return node;
+    }
+
+    if (isOpenParenToken(token)) {
       const node: Node = {
         type: 'Params',
         params: [],
         children: null,
       };
       token = tokens[++current];
-      if (token.type === 'paren' && token.value === ')') {
-        current++;
-        return node;
-      }
       while (
-        token.type !== 'paren' ||
-        (token.type === 'paren' && token.value !== ')')
+        !isParenToken(token) ||
+        (isBracketToken(token) && !isCloseBracketToken(token))
       ) {
         node.params.push(walk('inside_paren'));
         token = tokens[current];
       }
       current++;
-      const nextToken = tokens[current];
-      if (
-        !startsWithLowercase(nextToken.value) &&
-        (nextToken.type !== 'bracket' ||
-          (nextToken.type === 'bracket' && nextToken.value !== '}'))
-      ) {
-        node.children = walk('inside_paren');
-      }
+      node.children = walk(moment);
       return node;
     }
+
     throw new TypeError(
       `[nova:002]: token error "${token.type}" with value: "${token.value}"`,
     );
