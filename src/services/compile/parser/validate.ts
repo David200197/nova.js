@@ -7,7 +7,8 @@ export const isInsideBracketsMoment = (moment: Moment) =>
 
 export const isEndLine = (token: Token, moment: Moment) =>
   (isInsideBracketsMoment(moment) && isLowerCaseNameToken(token)) ||
-  (isInsideBracketsMoment(moment) && isCloseBracketToken(token));
+  (isInsideBracketsMoment(moment) && isCloseBracketToken(token)) ||
+  (isInsideBracketsMoment(moment) && isCloseSquareBracketToken(token));
 
 export const isLowerCaseNameToken = (token: Token) =>
   token.type === 'name' && startsWithLowercase(token.value);
@@ -62,3 +63,22 @@ export const isOpenParenToken = (token: Token) =>
 
 export const isCloseParenToken = (token: Token) =>
   isParenToken(token) && token.value === ')';
+
+export const isSquareBracketToken = (token: Token) =>
+  token.type === 'square_bracket';
+
+export const isOpenSquareBracketToken = (
+  token: Token,
+  {
+    isInsideBracket = false,
+    moment,
+  }: { isInsideBracket?: boolean; moment?: Moment } = {},
+) => {
+  const isSquareBracket = isSquareBracketToken(token) && token.value === '[';
+  return isInsideBracket
+    ? isSquareBracket && moment === 'inside_brackets'
+    : isSquareBracket;
+};
+
+export const isCloseSquareBracketToken = (token: Token) =>
+  isSquareBracketToken(token) && token.value === ']';

@@ -1,4 +1,4 @@
-type Collections = 'Fields' | 'Object' | 'Array';
+type Collections = 'Fields' | 'Object' | 'Array' | 'TypesArray';
 type BlockCollections = 'Params' | 'ArrayType';
 type Set = 'Separator' | 'Property';
 type Literials =

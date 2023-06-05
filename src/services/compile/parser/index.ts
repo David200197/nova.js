@@ -21,6 +21,9 @@ import {
   isInsideBracketsMoment,
   isLowerCaseNameToken,
   isParenToken,
+  isOpenSquareBracketToken,
+  isCloseSquareBracketToken,
+  isSquareBracketToken,
 } from './validate';
 
 export const parser = (tokens: Token[]): Ats => {
@@ -85,6 +88,20 @@ export const parser = (tokens: Token[]): Ats => {
     }
 
     if (
+      isInsideBracketsMoment(moment) &&
+      (isCommaToken(nextToken) || isCloseSquareBracketToken(nextToken)) &&
+      (isQuestionMarkToken(token) || isNameToken(token))
+    ) {
+      current++;
+      const node: Node = {
+        type: 'Block',
+        value: token.value,
+        children: null,
+      };
+      return node;
+    }
+
+    if (
       isEqualToken(token) ||
       isQuestionMarkToken(token) ||
       isNameToken(token)
@@ -126,8 +143,8 @@ export const parser = (tokens: Token[]): Ats => {
         !isBracketToken(token) ||
         (isBracketToken(token) && !isCloseBracketToken(token))
       ) {
-        current++;
         if (isNameToken(token) && isLowerCaseNameToken(token)) {
+          current++;
           node.params.push({
             type: 'Block',
             value: token.value,
@@ -187,6 +204,60 @@ export const parser = (tokens: Token[]): Ats => {
       }
       current++;
       node.children = walk(moment);
+      return node;
+    }
+
+    if (
+      isOpenSquareBracketToken(token) &&
+      isCloseSquareBracketToken(nextToken)
+    ) {
+      current++;
+      current++;
+      if (isInsideBracketsMoment(moment)) {
+        return {
+          type: 'ArrayType',
+          params: [],
+          children: walk(moment),
+        };
+      }
+      return {
+        type: 'Array',
+        params: [],
+      };
+    }
+
+    if (isOpenSquareBracketToken(token, { moment, isInsideBracket: true })) {
+      const node: Node = {
+        type: 'ArrayType',
+        params: [],
+        children: null,
+      };
+      token = tokens[++current];
+      while (
+        !isSquareBracketToken(token) ||
+        (isSquareBracketToken(token) && !isCloseSquareBracketToken(token))
+      ) {
+        node.params.push(walk(moment));
+        token = tokens[current];
+      }
+      current++;
+      node.children = walk(moment);
+      return node;
+    }
+    if (isOpenSquareBracketToken(token)) {
+      const node: Node = {
+        type: 'Array',
+        params: [],
+      };
+      token = tokens[++current];
+      while (
+        !isSquareBracketToken(token) ||
+        (isSquareBracketToken(token) && !isCloseSquareBracketToken(token))
+      ) {
+        node.params.push(walk(moment));
+        token = tokens[current];
+      }
+      current++;
       return node;
     }
 
